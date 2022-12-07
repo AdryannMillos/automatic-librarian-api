@@ -38,7 +38,9 @@ app.get("/", (req, res) => {
 });
 console.log(new Date().getMinutes());
 
-schedule.scheduleJob("00 40 * * * *", async () => {
+(async () => await CompareEventUrlService.execute())();
+
+schedule.scheduleJob("00 00 00 * * *", async () => {
   console.log("Running");
   console.log(new Date().getHours());
   await CompareEventUrlService.execute();
