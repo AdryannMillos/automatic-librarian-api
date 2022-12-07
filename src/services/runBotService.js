@@ -3,11 +3,15 @@ const Models = require("../models/index");
 
 async function execute(urlArray) {
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--start-maximized"],
     defaultViewport: null,
   });
   const page = await browser.newPage();
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
+  );
+  await page.setViewport({ width: 1440, height: 1024 });
 
   await newFunction();
   async function newFunction() {
