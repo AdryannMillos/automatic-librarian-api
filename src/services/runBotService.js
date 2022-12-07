@@ -3,8 +3,9 @@ const Models = require("../models/index");
 
 async function execute(urlArray) {
   const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: false,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--start-maximized"],
+    defaultViewport: null,
   });
   const page = await browser.newPage();
 

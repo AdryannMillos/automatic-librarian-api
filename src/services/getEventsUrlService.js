@@ -2,8 +2,9 @@ const puppeteer = require("puppeteer");
 
 async function execute() {
   const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: false,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--start-maximized"],
+    defaultViewport: null,
   });
   const page = await browser.newPage();
   await page.goto("https://leviathancommander.wixsite.com/home/reports");
@@ -13,13 +14,14 @@ async function execute() {
   page.evaluate(() => document.querySelector("a.gwgQCb.IEV8qS")?.click());
 
   while (await page.$("a.gwgQCb.IEV8qS")) {
-    const pageUrls = await page.evaluate(() =>
-      Array.from(
-        document.querySelectorAll("a.has-custom-focus"),
-        (element) => element.href
-      )
+    let hrefs = await page.$$eval("a.has-custom-focus", (as) =>
+      as.map((a) => a.href)
     );
-    pageUrls.forEach((url) => urlsArray.push(url));
+    hrefs = hrefs.filter((item) =>
+      item.includes("https://leviathancommander.wixsite.com/home/post")
+    );
+    hrefs.forEach((url) => urlsArray.push(url));
+    console.log("loading", urlsArray.length);
     await page.waitForTimeout(4000);
     page.evaluate(() => document.querySelector("a.gwgQCb.IEV8qS")?.click());
   }
@@ -32,7 +34,7 @@ async function execute() {
   pageUrls.forEach((url) => urlsArray.push(url));
 
   await browser.close();
-  console.log(urlsArray.length);
+
   return urlsArray;
 }
 
