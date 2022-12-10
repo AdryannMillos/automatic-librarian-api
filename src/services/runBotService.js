@@ -30,7 +30,7 @@ async function execute(urlArray) {
       let eventData = await page.$$eval("p.mm8Nw ", (elements) =>
         elements.map((item) => item.textContent)
       );
-
+      console.warn(eventData)
       eventData = eventData.reduce((accumResult, item) => {
         if (item.includes("\n")) {
           const splittedItems = item.split("\n").map((str) => str.trim());
@@ -68,8 +68,61 @@ async function execute(urlArray) {
         url: urlArray[i],
       };
 
-      const createdEvent = await Models.Event.create(event);
+      if(event.name == null){
+        await page.goto(urlArray[i], {
+          waitUntil: "load",
+          // Remove the timeout
+          timeout: 0,
+        });
+        console.log(page.url());
+  
+        const title = await page.$$eval("h1.UbhFJ7 ", (elements) =>
+          elements.map((item) => item.textContent)
+        );
+  
+        let eventData = await page.$$eval("p.mm8Nw ", (elements) =>
+          elements.map((item) => item.textContent)
+        );
 
+        eventData = eventData.reduce((accumResult, item) => {
+          if (item.includes("\n")) {
+            const splittedItems = item.split("\n").map((str) => str.trim());
+            accumResult.push(...splittedItems);
+          } else {
+            accumResult.push(item);
+          }
+  
+          return accumResult;
+        }, []);
+  
+        const standings = eventData.filter((item) => Number(item[0]));
+  
+        let location = eventData.find((item) => item.includes("City"));
+        if (location) {
+          location = location.replace("Country/City: ", "");
+        }
+  
+        let date = eventData.find((item) => item.includes("Data"));
+        if (date) {
+          date = date.replace("Data:  ", "");
+        }
+  
+        let nbPlayers = eventData.find((item) => item.includes("Nb"));
+        if (nbPlayers) {
+          nbPlayers = nbPlayers.replace("Nb of players: ", "");
+          nbPlayers = nbPlayers.replace("Nb of players*: ", "");
+        }
+  
+          event = {
+          name: title[0],
+          location: location,
+          date: date,
+          numberOfPlayers: nbPlayers,
+          url: urlArray[i],
+        };
+      }
+
+      const createdEvent = await Models.Event.create(event);
       const deckLists = await page.$$eval("p.mm8Nw a", (as) =>
         as.map((a) => {
           return { url: a.href, commander: a.text };
@@ -105,7 +158,7 @@ async function execute(urlArray) {
       });
       decks.map(async (item) => await Models.Deck.create(item));
 
-      await page.waitForTimeout(4000);
+      // await page.waitForTimeout(4000);
     }
   }
   await browser.close();
