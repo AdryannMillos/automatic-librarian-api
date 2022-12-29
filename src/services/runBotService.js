@@ -27,10 +27,10 @@ async function execute(urlArray) {
         elements.map((item) => item.textContent)
       );
 
-      let eventData = await page.$$eval("p.mm8Nw ", (elements) =>
-        elements.map((item) => item.textContent)
+      let eventData = await page.$$eval("span.public-DraftStyleDefault-ltr  ", (elements) =>
+      elements.map((item) => item.textContent)
       );
-      console.warn(eventData)
+      console.warn(eventData);
       eventData = eventData.reduce((accumResult, item) => {
         if (item.includes("\n")) {
           const splittedItems = item.split("\n").map((str) => str.trim());
@@ -51,7 +51,26 @@ async function execute(urlArray) {
 
       let date = eventData.find((item) => item.includes("Data"));
       if (date) {
-        date = date.replace("Data:  ", "");
+        let index = date.indexOf(":");
+        if (index > -1) {
+          date = date.substring(index + 1, date.length);
+          if (date.includes("-")) {
+            date = date;
+          } else {
+            date = new Date(date).toLocaleDateString();
+            const [day, month, year] = date.split("/");
+
+            date = [year, month, day].join("-");
+          }
+        }
+        // stringDate = date.replace("Data:", "");
+        // stringDate = date.replace("Data: ", "");
+        // stringDate = date.replace("Data:  ", "");
+        // stringDate = date.replace("Data*:  ", "");
+        // date = stringDate.includes("-")
+        //   ? stringDate
+        //   : new Date(stringDate).toLocaleDateString();
+        //   date =stringDate
       }
 
       let nbPlayers = eventData.find((item) => item.includes("Nb"));
@@ -68,19 +87,19 @@ async function execute(urlArray) {
         url: urlArray[i],
       };
 
-      if(event.name == null){
+      if (event.name == null) {
         await page.goto(urlArray[i], {
           waitUntil: "load",
           // Remove the timeout
           timeout: 0,
         });
         console.log(page.url());
-  
+
         const title = await page.$$eval("h1.UbhFJ7 ", (elements) =>
           elements.map((item) => item.textContent)
         );
-  
-        let eventData = await page.$$eval("p.mm8Nw ", (elements) =>
+
+        let eventData = await page.$$eval("span.public-DraftStyleDefault-ltr  ", (elements) =>
           elements.map((item) => item.textContent)
         );
 
@@ -91,29 +110,44 @@ async function execute(urlArray) {
           } else {
             accumResult.push(item);
           }
-  
+
           return accumResult;
         }, []);
-  
+
         const standings = eventData.filter((item) => Number(item[0]));
-  
+
         let location = eventData.find((item) => item.includes("City"));
         if (location) {
           location = location.replace("Country/City: ", "");
         }
-  
+
         let date = eventData.find((item) => item.includes("Data"));
         if (date) {
-          date = date.replace("Data:  ", "");
+          let index = date.indexOf(":");
+          if (index > -1) {
+            date = date.substring(index + 1, date.length);
+            if (date.includes("-")) {
+              date = date;
+            } else {
+              date = new Date(date).toLocaleDateString();
+              const [day, month, year] = date.split("/");
+
+              date = [year, month, day].join("-");
+            }
+          }
+          // stringDate = date.replace("Data:", "");
+          // stringDate = date.replace("Data: ", "");
+          // stringDate = date.replace("Data:  ", "");
+          // stringDate = date.replace("Data*:  ", "");
         }
-  
+
         let nbPlayers = eventData.find((item) => item.includes("Nb"));
         if (nbPlayers) {
           nbPlayers = nbPlayers.replace("Nb of players: ", "");
           nbPlayers = nbPlayers.replace("Nb of players*: ", "");
         }
-  
-          event = {
+
+        event = {
           name: title[0],
           location: location,
           date: date,
