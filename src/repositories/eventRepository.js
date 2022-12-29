@@ -10,7 +10,7 @@ const getAllEventsPaginated = async (limit, skip, location, date) => {
       limit: limit,
       offset: skip,
       distinct: true,
-      order: [["id", "DESC"]],
+      order: [["date", "DESC"]],
     });
 
     return { count, rows };
@@ -22,7 +22,7 @@ const getAllEventsPaginated = async (limit, skip, location, date) => {
       limit: limit,
       offset: skip,
       distinct: true,
-      order: [["id", "DESC"]],
+      order: [["date", "DESC"]],
     });
     return { count, rows };
   }
@@ -33,7 +33,7 @@ const getAllEventsPaginated = async (limit, skip, location, date) => {
       limit: limit,
       offset: skip,
       distinct: true,
-      order: [["id", "DESC"]],
+      order: [["date", "DESC"]],
     });
     return { count, rows };
   }
@@ -47,7 +47,7 @@ const getAllEventsPaginated = async (limit, skip, location, date) => {
       limit: limit,
       offset: skip,
       distinct: true,
-      order: [["id", "DESC"]],
+      order: [["date", "DESC"]],
     });
     return { count, rows };
   }
