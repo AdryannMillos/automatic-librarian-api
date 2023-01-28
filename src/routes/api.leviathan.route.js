@@ -1,16 +1,11 @@
 const express = require("express");
+
 const router = express.Router();
-const leviathanController = require("../controller/leviathanController")
-// 
+const leviathanController = require("../controller/leviathanController");
+//
 
-router.get(
-    "/",
-    leviathanController.compare
-  );
+router.get("/", leviathanController.compare);
 
-  router.get(
-    "/list",
-    leviathanController.filter
-  );  
+router.get("/list", leviathanController.filter);
 
-  module.exports = router;
+module.exports = router;
