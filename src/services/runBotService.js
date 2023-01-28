@@ -27,10 +27,11 @@ async function execute(urlArray) {
         elements.map((item) => item.textContent)
       );
 
-      let eventData = await page.$$eval("span.public-DraftStyleDefault-ltr  ", (elements) =>
-      elements.map((item) => item.textContent)
+      let eventData = await page.$$eval(
+        "span.public-DraftStyleDefault-ltr  ",
+        (elements) => elements.map((item) => item.textContent)
       );
-      console.warn(eventData);
+
       eventData = eventData.reduce((accumResult, item) => {
         if (item.includes("\n")) {
           const splittedItems = item.split("\n").map((str) => str.trim());
@@ -99,8 +100,9 @@ async function execute(urlArray) {
           elements.map((item) => item.textContent)
         );
 
-        let eventData = await page.$$eval("span.public-DraftStyleDefault-ltr  ", (elements) =>
-          elements.map((item) => item.textContent)
+        let eventData = await page.$$eval(
+          "span.public-DraftStyleDefault-ltr  ",
+          (elements) => elements.map((item) => item.textContent)
         );
 
         eventData = eventData.reduce((accumResult, item) => {
@@ -155,7 +157,42 @@ async function execute(urlArray) {
           url: urlArray[i],
         };
       }
-
+      if (
+        page.url() ===
+        "https://leviathancommander.wixsite.com/home/post/poland-leviathan-league-apr-may-poland"
+      ) {
+        event.date = "2022-4-1";
+      }
+      if (
+        page.url() ===
+        "https://leviathancommander.wixsite.com/home/post/krakenfest-on-line-2-aug-10-sep-4-cockatrice"
+      ) {
+        event.date = "2022-8-10";
+      }
+      if (
+        page.url() ===
+        "https://leviathancommander.wixsite.com/home/post/leviathan-team-battle-1-2022"
+      ) {
+        event.date = "2022-2-1";
+      }
+      if (
+        page.url() ===
+        "https://leviathancommander.wixsite.com/home/post/krakenfest-on-line-1-june13-july-10-cockatrice"
+      ) {
+        event.date = "2022-6-1";
+      }
+      if (
+        page.url() ===
+        "https://leviathancommander.wixsite.com/home/post/krakenfest-on-line-3-nov-1-17-cockatrice"
+      ) {
+        event.date = "2022-11-1";
+      }
+      if (
+        page.url() ===
+        "https://leviathancommander.wixsite.com/home/post/sea-king-tournament-report"
+      ) {
+        event.date = "2019-7-6";
+      }
       const createdEvent = await Models.Event.create(event);
       const deckLists = await page.$$eval("p.mm8Nw a", (as) =>
         as.map((a) => {
@@ -165,16 +202,31 @@ async function execute(urlArray) {
 
       const decks = standings.map((item, index) => {
         const position = isNaN(item[1]) ? item[0] : item[0] + item[1];
-        const indexOfStringDivision = item.includes("-")
-          ? item.indexOf("-")
-          : item.indexOf(")");
-        let commander = item.substring(indexOfStringDivision + 2, item.length);
-
+        let indexOfStringDivision;
+        if (item.includes("-")) {
+          indexOfStringDivision = item.indexOf("-");
+        }
+        if (item.includes(")")) {
+          indexOfStringDivision = item.indexOf(")");
+        }
+        if (item.includes("–")) {
+          indexOfStringDivision = item.indexOf("–");
+        }
+        commander = item.substring(indexOfStringDivision + 2, item.length);
         commander =
           commander[commander.length - 1] == " "
             ? commander.slice(0, commander.length - 1)
             : commander;
         let list = deckLists.find((item) => item.commander === commander);
+
+        let arr = [];
+        let index2 = commander.indexOf("//");
+        if (index2 > -1) {
+          arr.push(commander.substring(0, index2));
+          arr.push(commander.substring(index2 + 2, commander.length));
+          arr = arr.sort();
+          commander = arr[0] + "//" + arr[1];
+        }
 
         const obj = {
           eventId: createdEvent.id,
