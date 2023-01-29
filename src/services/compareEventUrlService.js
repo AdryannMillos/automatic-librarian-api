@@ -1,26 +1,12 @@
-const getEventsUrlService = require("./bot/getEventsUrlService");
-const getDataFromUrlService = require("./bot/getDataFromUrlService");
 const eventRepository = require("../repositories/eventRepository");
 
-async function execute() {
-    const urlsArray = await getEventsUrlService.execute();
-
+async function execute(urlsArray) {
     const getStoredEvents = await eventRepository.findAll();
     const storedUrls = getStoredEvents.map((item) => item.url);
 
     const filteredUrls = filterUrls(urlsArray, storedUrls);
 
-    // console.log("urlsArray", urlsArray.length);
-    // console.log("urlsStored", storedUrls.length);
-    // console.log("filteredUrls", filteredUrls.length);
-
-    if (filteredUrls.length > 0) {
-        for (let i = 0; i < filteredUrls.length; i++) {
-            await getDataFromUrlService.execute(filteredUrls[i]);
-            // console.log("read");
-        }
-    }
-    // console.log("finished");
+    return filteredUrls;
 }
 
 function filterUrls(urlsArray, storedEvents) {

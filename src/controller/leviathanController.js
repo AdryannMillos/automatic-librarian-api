@@ -1,5 +1,8 @@
 /* eslint-disable consistent-return */
 const leviathanFilterService = require("../services/leviathanFilterService");
+const getEventsUrlService = require("../services/bot/getEventsUrlService");
+const getDataFromUrlService = require("../services/bot/getDataFromUrlService");
+const compareEventUrlService = require("../services/compareEventUrlService");
 
 async function index(req, res) {
     try {
@@ -38,6 +41,23 @@ async function index(req, res) {
     }
 }
 
+async function runBot() {
+    try {
+        const urlsArray = await getEventsUrlService.execute();
+
+        const filteredUrls = await compareEventUrlService.execute(urlsArray);
+        if (filteredUrls.length > 0) {
+            for (let i = 0; i < filteredUrls.length; i++) {
+                await getDataFromUrlService.execute(filteredUrls[i]);
+            }
+        }
+        return true;
+    } catch (error) {
+        return error.message;
+    }
+}
+
 module.exports = {
     index,
+    runBot,
 };

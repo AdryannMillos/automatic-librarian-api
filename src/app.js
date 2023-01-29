@@ -3,7 +3,7 @@ const schedule = require("node-schedule");
 const express = require("express");
 const cors = require("cors");
 
-const CompareEventUrlService = require("./services/CompareEventUrlService");
+const leviathanController = require("./controller/leviathanController");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -25,12 +25,12 @@ app.get("/", (req, res) => {
 });
 console.log(new Date().getMinutes());
 
-(async () => await CompareEventUrlService.execute())();
+(async () => await leviathanController.runBot())();
 
 schedule.scheduleJob("00 00 00 * * *", async () => {
     console.log("Running");
     console.log(new Date().getHours());
-    await CompareEventUrlService.execute();
+    await leviathanController.runBot;
 });
 
 module.exports = app;
