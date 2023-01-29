@@ -1,16 +1,7 @@
-const leviathanCompareService = require("../services/CompareEventUrlService");
+/* eslint-disable consistent-return */
 const leviathanFilterService = require("../services/leviathanFilterService");
 
-async function compare(req, res) {
-    try {
-        await leviathanCompareService.execute();
-        return res.status(200);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-}
-
-async function filter(req, res) {
+async function index(req, res) {
     try {
         let { page, size } = req.query;
         if (!page) {
@@ -48,6 +39,5 @@ async function filter(req, res) {
 }
 
 module.exports = {
-    compare,
-    filter,
+    index,
 };
