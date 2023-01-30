@@ -2,6 +2,8 @@ const puppeteer = require("puppeteer");
 
 const urlsArray = [];
 
+let cov_2jmyuny2tf;
+
 async function execute() {
     const browser = await puppeteer.launch({
         headless: true,
