@@ -118,7 +118,12 @@ function getDateFromSpecialCases(fetchedUrl, date) {
 
 function getDecksData(createdEvent, standings, deckLists) {
     const decks = standings.map((item) => {
-        const position = Number.isNaN(item[1]) ? item[0] : item[0] + item[1];
+        const dotIndex = item.indexOf(".");
+        let position;
+        if (dotIndex > -1) {
+            const str = item[0] + item[1] + item[2];
+            position = str.replace(/\D/g, "");
+        }
         let indexOfStringDivision;
         if (item.includes("-")) {
             indexOfStringDivision = item.indexOf("-");
