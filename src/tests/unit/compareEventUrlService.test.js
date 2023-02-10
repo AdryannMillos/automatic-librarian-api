@@ -18,7 +18,7 @@ const goodUrl2 = "https://jestjs.io/docs/testing-frameworks";
 
 const data = [goodUrl1, badUrl1, badUrl2, badUrl3, goodUrl2];
 
-describe("Test the compare event service", () => {
+describe("Test the compareEventService", () => {
     test("should return good urls only", async () => {
         eventRepository.findAll.mockResolvedValue([
             { url: storedUrl1 },
