@@ -17,7 +17,7 @@ async function execute(fetchedUrl) {
         waitUntil: "load",
         timeout: 0,
     });
-    // console.log(page.url());
+
     let [event, standings] = await getEventData(page, fetchedUrl);
     if (!event.name) {
         [event, standings] = await getEventData(page, fetchedUrl);
@@ -29,6 +29,7 @@ async function execute(fetchedUrl) {
             return { url: a.href, commander: a.text };
         })
     );
+
     const decks = getDecksData(createdEvent, standings, deckLists);
 
     for (let i = 0; i < decks.length; i++) {
@@ -47,7 +48,7 @@ async function getEventData(page, fetchedUrl) {
         "span.public-DraftStyleDefault-ltr  ",
         (elements) => elements.map((item) => item.textContent)
     );
-    // console.log(eventData);
+
     eventData = eventData.reduce((accumResult, item) => {
         if (item.includes("\n")) {
             const splittedItems = item.split("\n").map((str) => str.trim());
