@@ -1,9 +1,34 @@
+/* eslint-disable no-return-await */
 const Sequelize = require("sequelize");
 const Models = require("../models/index");
 
 const { Op } = Sequelize;
 
 const findAll = async () => Models.Event.findAll();
+
+const filterOptions = (location, date, initialDate, finalDate) => {
+    const query = {};
+    if (location && date) {
+        query.where = {
+            location: { [Op.iLike]: `%${location}%` },
+            date: { [Op.iLike]: `%${date}%` },
+        };
+    } else if (location) {
+        query.where = {
+            location: { [Op.iLike]: `%${location}%` },
+            ...(initialDate &&
+                finalDate && {
+                    date: { [Op.between]: [initialDate, finalDate] },
+                }),
+        };
+    } else if (date) {
+        query.where = { date: { [Op.iLike]: `%${date}%` } };
+    } else if (initialDate && finalDate) {
+        query.where = { date: { [Op.between]: [initialDate, finalDate] } };
+    }
+    return query;
+};
+
 const getAllEventsPaginated = async (
     limit,
     skip,
@@ -12,64 +37,18 @@ const getAllEventsPaginated = async (
     initialDate,
     finalDate
 ) => {
-    if (!location && !date) {
-        const { count, rows } = await Models.Event.findAndCountAll({
-            ...(initialDate &&
-                finalDate && {
-                    where: { date: { [Op.between]: [initialDate, finalDate] } },
-                }),
-            include: ["decks"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["date", "DESC"]],
-        });
-
-        return { count, rows };
-    }
-    if (!location && date) {
-        const { count, rows } = await Models.Event.findAndCountAll({
-            where: { date: { [Op.iLike]: `%${date}%` } },
-            include: ["decks"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["date", "DESC"]],
-        });
-        return { count, rows };
-    }
-    if (location && !date) {
-        const { count, rows } = await Models.Event.findAndCountAll({
-            where: {
-                location: { [Op.iLike]: `%${location}%` },
-                ...(initialDate &&
-                    finalDate && {
-                        date: { [Op.between]: [initialDate, finalDate] },
-                    }),
-            },
-            include: ["decks"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["date", "DESC"]],
-        });
-        return { count, rows };
-    }
-    if (location && date) {
-        const { count, rows } = await Models.Event.findAndCountAll({
-            where: {
-                location: { [Op.iLike]: `%${location}%` },
-                date: { [Op.iLike]: `%${date}%` },
-            },
-            include: ["decks"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["date", "DESC"]],
-        });
-        return { count, rows };
-    }
+    const where = filterOptions(location, date, initialDate, finalDate);
+    const { count, rows } = await Models.Event.findAndCountAll({
+        ...where,
+        include: ["decks"],
+        limit,
+        offset: skip,
+        distinct: true,
+        order: [["date", "DESC"]],
+    });
+    return { count, rows };
 };
+
 const getCommanderPaginated = async (
     limit,
     skip,
@@ -79,232 +58,119 @@ const getCommanderPaginated = async (
     initialDate,
     finalDate
 ) => {
-    if (!location && !date) {
-        const { count, rows } = await Models.Deck.findAndCountAll({
-            where: {
-                commander: { [Op.iLike]: `%${commander}%` },
-                ...(initialDate &&
-                    finalDate && {
-                        date: { [Op.between]: [initialDate, finalDate] },
-                    }),
-            },
-            include: ["event"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["id", "DESC"]],
-        });
-        return { count, rows };
-    }
-    if (!location && date) {
-        const { count, rows } = await Models.Deck.findAndCountAll({
-            where: {
-                commander: { [Op.iLike]: `%${commander}%` },
-                "$event.date$": { [Op.iLike]: `%${date}%` },
-            },
-            include: ["event"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["id", "DESC"]],
-        });
-        return { count, rows };
-    }
-    if (location && !date) {
-        const { count, rows } = await Models.Deck.findAndCountAll({
-            where: {
-                commander: { [Op.iLike]: `%${commander}%` },
+    let where = { commander: { [Op.iLike]: `%${commander}%` } };
+    if (location || date) {
+        where = {
+            ...where,
+            "$event.date$": { [Op.iLike]: `%${date}%` },
+            ...(location && {
                 "$event.location$": { [Op.iLike]: `%${location}%` },
-                ...(initialDate &&
-                    finalDate && {
-                        "$event.date$": {
-                            [Op.between]: [initialDate, finalDate],
-                        },
-                    }),
-            },
-            include: ["event"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["id", "DESC"]],
-        });
-        return { count, rows };
+            }),
+            ...(initialDate &&
+                finalDate && {
+                    "$event.date$": { [Op.between]: [initialDate, finalDate] },
+                }),
+        };
     }
-    if (location && date) {
-        const { count, rows } = await Models.Deck.findAndCountAll({
-            where: {
-                commander: { [Op.iLike]: `%${commander}%` },
-                "$event.date$": { [Op.iLike]: `%${date}%` },
-                "$event.location$": { [Op.iLike]: `%${location}%` },
-            },
-            include: ["event"],
-            limit,
-            offset: skip,
-            distinct: true,
-            order: [["id", "DESC"]],
-        });
-        return { count, rows };
-    }
+    const { count, rows } = await Models.Deck.findAndCountAll({
+        where,
+        include: ["event"],
+        limit,
+        offset: skip,
+        distinct: true,
+        order: [["id", "DESC"]],
+    });
+    return { count, rows };
 };
 
-async function getMostWinnerDecks(location, date, initialDate, finalDate) {
-    if (!location && !date && !initialDate && !finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and "position" = '1' GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            },
-            { where: { id: "1" } }
-        );
-    }
-    if (!location && !date && initialDate && finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and "position" = '1' WHERE e.date BETWEEN '${initialDate}' AND '${finalDate}' GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            },
-            { where: { id: "1" } }
-        );
-    }
-    if (location && !date && !initialDate && !finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and e."location" ilike '%${location}%' and "position" = '1'  GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (location && !date && initialDate && finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and e."location" ilike '%${location}%' and "position" = '1' WHERE e.date BETWEEN '${initialDate}' AND '${finalDate}' GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (!location && date) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."date" ilike '%${date}%' and "position" = '1' GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (location && date) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."date" ilike '%${date}%' and e."location" ilike '%${location}%' and "position" = '1'  GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-}
-
 async function getMostTop4Decks(location, date, initialDate, finalDate) {
-    if (!location && !date && !initialDate && !finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and ("position" = '1' or "position" = '2' or "position" = '3' or "position" = '4')  GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
+    const conditions = [];
+    conditions.push("position IN ('1', '2', '3', '4')");
+
+    if (location) {
+        conditions.push(`e."location" ILIKE :location`);
+    }
+    if (date) {
+        conditions.push(`e."date" ILIKE :date`);
+    }
+    if (initialDate && finalDate) {
+        conditions.push(`e.date BETWEEN :initialDate AND :finalDate`);
     }
 
-    if (!location && !date && initialDate && finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and ("position" = '1' or "position" = '2' or "position" = '3' or "position" = '4')  WHERE e.date BETWEEN '${initialDate}' AND '${finalDate}'  GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
+    const whereClause =
+        conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
 
-    if (location && !date && !initialDate && !finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and e."location" ilike '%${location}%' and ("position" = '1' or "position" = '2' or "position" = '3' or "position" = '4')  GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-
-    if (location && !date && initialDate && finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and e."location" ilike '%${location}%' and ("position" = '1' or "position" = '2' or "position" = '3' or "position" = '4') WHERE e.date BETWEEN '${initialDate}' AND '${finalDate}' GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-
-    if (!location && date) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."date" ilike '%${date}%' and ("position" = '1' or "position" = '2' or "position" = '3' or "position" = '4')  GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (location && date) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."date" ilike '%${date}%' and e."location" ilike '%${location}%' and ("position" = '1' or "position" = '2' or "position" = '3' or "position" = '4')  GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
+    return await Models.sequelize.query(
+        `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e on e."id" = d."eventId" ${whereClause} GROUP BY "commander" ORDER BY "occurrence" DESC;`,
+        {
+            replacements: {
+                location: `%${location}%`,
+                date: `%${date}%`,
+                initialDate,
+                finalDate,
+            },
+            type: Models.sequelize.QueryTypes.SELECT,
+        }
+    );
 }
 
 async function getMostPlayedDecks(location, date, initialDate, finalDate) {
-    if (!location && !date && !initialDate && !finalDate) {
-        return await Models.sequelize.query(
-            'SELECT "commander", COUNT("commander") AS "occurrence" FROM "Decks" GROUP BY "commander" ORDER BY "occurrence" DESC;',
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
+    const conditions = [];
+
+    if (location) {
+        conditions.push(`e."location" ILIKE '%${location}%'`);
+    }
+    if (date) {
+        conditions.push(`e."date" ILIKE '%${date}%'`);
+    }
+    if (initialDate && finalDate) {
+        conditions.push(
+            `e.date BETWEEN '%${initialDate}%' AND '%${finalDate}%'`
         );
     }
-    if (!location && !date && initialDate && finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence"  FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" WHERE e.date BETWEEN '${initialDate}' AND '${finalDate}' GROUP BY d."commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (location && !date && !initialDate && !finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence"  FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."location" ilike '%${location}%' GROUP BY d."commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (location && !date && initialDate && finalDate) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence"  FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."location" ilike '%${location}%' WHERE e.date BETWEEN '${initialDate}' AND '${finalDate}' GROUP BY d."commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (!location && date) {
-        return await Models.sequelize.query(
-            `SELECT d."commander", COUNT(d."commander") AS "occurrence"  FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."date" ilike '%${date}%' GROUP BY d."commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
-    if (location && date) {
-        return await Models.sequelize.query(
-            `	SELECT d."commander", COUNT(d."commander") AS "occurrence"  FROM "Decks" as d inner JOIN "Events" as e on  e."id" =  d."eventId" and  e."date" ilike '%${date}%' and e."location" ilike '%${location}%' GROUP BY d."commander" ORDER BY "occurrence" DESC;`,
-            {
-                type: Models.sequelize.QueryTypes.SELECT,
-            }
-        );
-    }
+
+    const whereClause =
+        conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
+
+    return await Models.sequelize.query(
+        `SELECT "commander", COUNT("commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e on e."id" = d."eventId" ${whereClause} GROUP BY "commander" ORDER BY "occurrence" DESC;`,
+        {
+            replacements: { location, date, initialDate, finalDate },
+            type: Models.sequelize.QueryTypes.SELECT,
+        }
+    );
 }
+
+async function getMostWinnerDecks(location, date, initialDate, finalDate) {
+    let query = `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e ON e."id" = d."eventId" AND "position" = '1'`;
+
+    const whereClause = [];
+    const replacements = {};
+
+    if (location) {
+        whereClause.push(`e."location" ILIKE :location`);
+        replacements.location = `%${location}%`;
+    }
+    if (date) {
+        whereClause.push(`e."date" ILIKE :date`);
+        replacements.date = `%${date}%`;
+    }
+    if (initialDate && finalDate) {
+        whereClause.push(`e.date BETWEEN :initialDate AND :finalDate`);
+        replacements.initialDate = initialDate;
+        replacements.finalDate = finalDate;
+    }
+    if (whereClause.length > 0) {
+        query += ` WHERE ${whereClause.join(" AND ")}`;
+    }
+    query += ` GROUP BY "commander" ORDER BY "occurrence" DESC;`;
+
+    return await Models.sequelize.query(query, {
+        replacements,
+        type: Models.sequelize.QueryTypes.SELECT,
+    });
+}
+
 module.exports = {
     getAllEventsPaginated,
     getMostPlayedDecks,
