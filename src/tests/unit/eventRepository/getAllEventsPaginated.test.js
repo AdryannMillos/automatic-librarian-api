@@ -734,4 +734,36 @@ describe("getAllEventsPaginated", () => {
             rows: [EventRowsArray[0], EventRowsArray[1]],
         });
     });
+    it("returns the expected searching with no parameters", async () => {
+        const location = null;
+        const date = null;
+        const initialDate = null;
+        const finalDate = null;
+
+        Models.Event.findAndCountAll = jest.fn().mockReturnValue({
+            count: 4,
+            rows: EventRowsArray,
+        });
+
+        const result = await eventRepository.getAllEventsPaginated(
+            limit,
+            skip,
+            location,
+            date,
+            initialDate,
+            finalDate
+        );
+
+        expect(Models.Event.findAndCountAll).toHaveBeenCalledWith({
+            include: ["decks"],
+            limit,
+            offset: skip,
+            distinct: true,
+            order: [["date", "DESC"]],
+        });
+        expect(result).toEqual({
+            count: 4,
+            rows: EventRowsArray,
+        });
+    });
 });
