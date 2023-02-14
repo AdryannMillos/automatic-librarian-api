@@ -59,16 +59,18 @@ const getCommanderPaginated = async (
     finalDate
 ) => {
     let where = { commander: { [Op.iLike]: `%${commander}%` } };
-    if (location || date) {
+    if (location || date || (initialDate && finalDate)) {
         where = {
             ...where,
-            "$event.date$": { [Op.iLike]: `%${date}%` },
+            ...(date && { "$event.date$": { [Op.iLike]: `%${date}%` } }),
             ...(location && {
                 "$event.location$": { [Op.iLike]: `%${location}%` },
             }),
             ...(initialDate &&
                 finalDate && {
-                    "$event.date$": { [Op.between]: [initialDate, finalDate] },
+                    "$event.date$": {
+                        [Op.between]: [initialDate, finalDate],
+                    },
                 }),
         };
     }
