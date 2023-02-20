@@ -1,10 +1,14 @@
 /* eslint-disable consistent-return */
-const leviathanFilterService = require("../services/leviathanFilterService");
+const eventFilterService = require("../services/eventFilterService");
+const commanderFilterService = require("../services/commanderFilterService");
+const playedFilterService = require("../services/playedFilterService");
+const top4FilterService = require("../services/top4FilterService");
+const winnerFilterService = require("../services/winnerFilterService");
 const getEventsUrlService = require("../services/bot/getEventsUrlService");
 const getDataFromUrlService = require("../services/bot/getDataFromUrlService");
 const compareEventUrlService = require("../services/compareEventUrlService");
 
-async function index(req, res) {
+async function event(req, res) {
     try {
         let { page, size } = req.query;
         if (!page) {
@@ -14,27 +18,156 @@ async function index(req, res) {
             size = 10;
         }
 
-        const limit = parseInt(size);
+        const limit = parseInt(size, 10);
         const skip = (page - 1) * size;
 
-        const filtered = await leviathanFilterService.execute(
+        const filtered = await eventFilterService.execute(
             req.query,
             limit,
             skip
         );
-        const numberOfPages = Math.ceil(filtered.paginated.count / size);
+
+        const numberOfPages = Math.ceil(filtered.count / size);
 
         return res.status(200).json({
-            isEvent: !req.query.commander,
             paginatedTable: {
                 actualPage: page,
                 size,
                 numberOfPages,
-                events: filtered.paginated.rows,
+                events: filtered.rows,
             },
-            mostPlayedDecks: filtered.mostPlayedDecks,
-            mostTop4Decks: filtered.mostTop4Decks,
-            mostWinnerDecks: filtered.mostWinnerDecks,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+async function commander(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await commanderFilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                actualPage: page,
+                size,
+                numberOfPages,
+                events: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+async function played(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await playedFilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                actualPage: page,
+                size,
+                numberOfPages,
+                events: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+async function top4(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await top4FilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                actualPage: page,
+                size,
+                numberOfPages,
+                events: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+async function winner(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await winnerFilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                actualPage: page,
+                size,
+                numberOfPages,
+                events: filtered.rows,
+            },
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -58,6 +191,10 @@ async function runBot() {
 }
 
 module.exports = {
-    index,
+    event,
+    commander,
+    top4,
+    played,
+    winner,
     runBot,
 };
