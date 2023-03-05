@@ -85,7 +85,14 @@ const getCommanderPaginated = async (
     return { count, rows };
 };
 
-async function getMostTop4Decks(location, date, initialDate, finalDate) {
+async function getMostTop4Decks(
+    limit,
+    skip,
+    location,
+    date,
+    initialDate,
+    finalDate
+) {
     const conditions = [];
     conditions.push("position IN ('1', '2', '3', '4')");
 
@@ -102,21 +109,49 @@ async function getMostTop4Decks(location, date, initialDate, finalDate) {
     const whereClause =
         conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
 
-    return await Models.sequelize.query(
-        `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e on e."id" = d."eventId" ${whereClause} GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-        {
-            replacements: {
-                location: `%${location}%`,
-                date: `%${date}%`,
-                initialDate,
-                finalDate,
-            },
-            type: Models.sequelize.QueryTypes.SELECT,
-        }
-    );
+    let query = `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e on e."id" = d."eventId" ${whereClause}`;
+
+    query += ` GROUP BY "commander" ORDER BY "occurrence" `;
+
+    const subQuery = query ? `(${query}) as count` : "";
+
+    const countQuery = `SELECT COUNT(*) FROM ${subQuery};`;
+
+    const [countResult] = await Models.sequelize.query(countQuery, {
+        replacements: {
+            location: `%${location}%`,
+            date: `%${date}%`,
+            initialDate,
+            finalDate,
+        },
+        type: Models.sequelize.QueryTypes.SELECT,
+    });
+
+    query += `DESC LIMIT ${limit} OFFSET ${skip}`;
+
+    const { count } = countResult;
+
+    const rows = await Models.sequelize.query(query, {
+        replacements: {
+            location: `%${location}%`,
+            date: `%${date}%`,
+            initialDate,
+            finalDate,
+        },
+        type: Models.sequelize.QueryTypes.SELECT,
+    });
+
+    return { rows, count };
 }
 
-async function getMostPlayedDecks(location, date, initialDate, finalDate) {
+async function getMostPlayedDecks(
+    limit,
+    skip,
+    location,
+    date,
+    initialDate,
+    finalDate
+) {
     const conditions = [];
 
     if (location) {
@@ -133,17 +168,37 @@ async function getMostPlayedDecks(location, date, initialDate, finalDate) {
 
     const whereClause =
         conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
+    let query = `SELECT "commander", COUNT("commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e on e."id" = d."eventId" ${whereClause}`;
 
-    return await Models.sequelize.query(
-        `SELECT "commander", COUNT("commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e on e."id" = d."eventId" ${whereClause} GROUP BY "commander" ORDER BY "occurrence" DESC;`,
-        {
-            replacements: { location, date, initialDate, finalDate },
-            type: Models.sequelize.QueryTypes.SELECT,
-        }
-    );
+    query += ` GROUP BY "commander" ORDER BY "occurrence" `;
+
+    const subQuery = query ? `(${query}) as count` : "";
+
+    const countQuery = `SELECT COUNT(*) FROM ${subQuery};`;
+
+    const [countResult] = await Models.sequelize.query(countQuery, {
+        type: Models.sequelize.QueryTypes.SELECT,
+    });
+
+    query += `DESC LIMIT ${limit} OFFSET ${skip}`;
+
+    const { count } = countResult;
+
+    const rows = await Models.sequelize.query(query, {
+        type: Models.sequelize.QueryTypes.SELECT,
+    });
+
+    return { rows, count };
 }
 
-async function getMostWinnerDecks(location, date, initialDate, finalDate) {
+async function getMostWinnerDecks(
+    limit,
+    skip,
+    location,
+    date,
+    initialDate,
+    finalDate
+) {
     let query = `SELECT d."commander", COUNT(d."commander") AS "occurrence" FROM "Decks" as d INNER JOIN "Events" as e ON e."id" = d."eventId" AND "position" = '1'`;
 
     const whereClause = [];
@@ -165,12 +220,27 @@ async function getMostWinnerDecks(location, date, initialDate, finalDate) {
     if (whereClause.length > 0) {
         query += ` WHERE ${whereClause.join(" AND ")}`;
     }
-    query += ` GROUP BY "commander" ORDER BY "occurrence" DESC;`;
+    query += ` GROUP BY "commander" ORDER BY "occurrence" `;
 
-    return await Models.sequelize.query(query, {
+    const subQuery = query ? `(${query}) as count` : "";
+
+    const countQuery = `SELECT COUNT(*) FROM ${subQuery};`;
+
+    const [countResult] = await Models.sequelize.query(countQuery, {
         replacements,
         type: Models.sequelize.QueryTypes.SELECT,
     });
+
+    query += `DESC LIMIT ${limit} OFFSET ${skip}`;
+
+    const { count } = countResult;
+
+    const rows = await Models.sequelize.query(query, {
+        replacements,
+        type: Models.sequelize.QueryTypes.SELECT,
+    });
+
+    return { rows, count };
 }
 
 module.exports = {
