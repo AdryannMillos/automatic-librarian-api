@@ -67,7 +67,7 @@ async function commander(req, res) {
                 actualPage: page,
                 size,
                 numberOfPages,
-                events: filtered.rows,
+                commanders: filtered.rows,
             },
         });
     } catch (error) {
@@ -100,7 +100,7 @@ async function played(req, res) {
                 actualPage: page,
                 size,
                 numberOfPages,
-                events: filtered.rows,
+                played: filtered.rows,
             },
         });
     } catch (error) {
@@ -133,7 +133,7 @@ async function top4(req, res) {
                 actualPage: page,
                 size,
                 numberOfPages,
-                events: filtered.rows,
+                top4: filtered.rows,
             },
         });
     } catch (error) {
@@ -166,7 +166,7 @@ async function winner(req, res) {
                 actualPage: page,
                 size,
                 numberOfPages,
-                events: filtered.rows,
+                winners: filtered.rows,
             },
         });
     } catch (error) {
