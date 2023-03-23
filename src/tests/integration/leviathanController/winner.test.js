@@ -27,6 +27,7 @@ describe("GET /winners", () => {
 
         expect(response.body).toEqual({
             paginatedTable: {
+                total: 10,
                 actualPage: 1,
                 size: 10,
                 numberOfPages: 1,
@@ -65,6 +66,7 @@ describe("GET /winners", () => {
 
         expect(response.body).toEqual({
             paginatedTable: {
+                total: 10,
                 actualPage: "2",
                 size: "5",
                 numberOfPages: 2,
@@ -109,6 +111,7 @@ describe("GET /winners", () => {
 
         expect(response.body).toEqual({
             paginatedTable: {
+                total: 10,
                 actualPage: 1,
                 size: 10,
                 numberOfPages: 1,
@@ -151,6 +154,7 @@ describe("GET /winners", () => {
 
         expect(response.body).toEqual({
             paginatedTable: {
+                total: 10,
                 actualPage: 1,
                 size: 10,
                 numberOfPages: 1,
@@ -195,6 +199,7 @@ describe("GET /winners", () => {
 
         expect(response.body).toEqual({
             paginatedTable: {
+                total: 10,
                 actualPage: 1,
                 size: 10,
                 numberOfPages: 1,
@@ -239,6 +244,7 @@ describe("GET /winners", () => {
 
         expect(response.body).toEqual({
             paginatedTable: {
+                total: 10,
                 actualPage: 1,
                 size: 10,
                 numberOfPages: 1,
@@ -283,6 +289,7 @@ describe("GET /winners", () => {
 
         expect(response.body).toEqual({
             paginatedTable: {
+                total: 10,
                 actualPage: 1,
                 size: 10,
                 numberOfPages: 1,
