@@ -1,53 +1,205 @@
-const leviathanCompareService = require("../services/CompareEventUrlService");
-const leviathanFilterService = require("../services/leviathanFilterService");
+/* eslint-disable consistent-return */
+const eventFilterService = require("../services/eventFilterService");
+const commanderFilterService = require("../services/commanderFilterService");
+const playedFilterService = require("../services/playedFilterService");
+const top4FilterService = require("../services/top4FilterService");
+const winnerFilterService = require("../services/winnerFilterService");
+const getEventsUrlService = require("../services/bot/getEventsUrlService");
+const getDataFromUrlService = require("../services/bot/getDataFromUrlService");
+const compareEventUrlService = require("../services/compareEventUrlService");
 
-async function compare(req, res) {
-  try {
-    await leviathanCompareService.execute();
-    return res.status(200);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+async function event(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await eventFilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                total: filtered.count,
+                actualPage: page,
+                size,
+                numberOfPages,
+                events: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 }
 
-async function filter(req, res) {
-  try {
-    let { page, size } = req.query;
-    if (!page) {
-      page = 1;
+async function commander(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await commanderFilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                total: filtered.count,
+                actualPage: page,
+                size,
+                numberOfPages,
+                commanders: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-    if (!size) {
-      size = 10;
+}
+
+async function played(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await playedFilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                total: filtered.count,
+                actualPage: page,
+                size,
+                numberOfPages,
+                played: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
+}
 
-    const limit = parseInt(size);
-    const skip = (page - 1) * size;
+async function top4(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
 
-    const filtered = await leviathanFilterService.execute(
-      req.query,
-      limit,
-      skip
-    );
-    const numberOfPages = Math.ceil(filtered.paginated.count / size);
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
 
-    return res.status(200).json({
-      isEvent: req.query.commander ? false : true,
-      paginatedTable: {
-        actualPage: page,
-        size: size,
-        numberOfPages: numberOfPages,
-        events: filtered.paginated.rows,
-      },
-      mostPlayedDecks: filtered.mostPlayedDecks,
-      mostTop4Decks: filtered.mostTop4Decks,
-      mostWinnerDecks: filtered.mostWinnerDecks,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+        const filtered = await top4FilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                total: filtered.count,
+                actualPage: page,
+                size,
+                numberOfPages,
+                top4: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+async function winner(req, res) {
+    try {
+        let { page, size } = req.query;
+        if (!page) {
+            page = 1;
+        }
+        if (!size) {
+            size = 10;
+        }
+
+        const limit = parseInt(size, 10);
+        const skip = (page - 1) * size;
+
+        const filtered = await winnerFilterService.execute(
+            req.query,
+            limit,
+            skip
+        );
+        const numberOfPages = Math.ceil(filtered.count / size);
+
+        return res.status(200).json({
+            paginatedTable: {
+                total: filtered.count,
+                actualPage: page,
+                size,
+                numberOfPages,
+                winners: filtered.rows,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+async function runBot() {
+    try {
+        const urlsArray = await getEventsUrlService.execute();
+
+        const filteredUrls = await compareEventUrlService.execute(urlsArray);
+        if (filteredUrls.length > 0) {
+            for (let i = 0; i < filteredUrls.length; i++) {
+                await getDataFromUrlService.execute(filteredUrls[i]);
+            }
+        }
+        return true;
+    } catch (error) {
+        return error.message;
+    }
 }
 
 module.exports = {
-  compare,
-  filter,
+    event,
+    commander,
+    top4,
+    played,
+    winner,
+    runBot,
 };
