@@ -31,6 +31,7 @@ async function event(req, res) {
 
         return res.status(200).json({
             paginatedTable: {
+                total: filtered.count,
                 actualPage: page,
                 size,
                 numberOfPages,
@@ -64,6 +65,7 @@ async function commander(req, res) {
 
         return res.status(200).json({
             paginatedTable: {
+                total: filtered.count,
                 actualPage: page,
                 size,
                 numberOfPages,
@@ -97,6 +99,7 @@ async function played(req, res) {
 
         return res.status(200).json({
             paginatedTable: {
+                total: filtered.count,
                 actualPage: page,
                 size,
                 numberOfPages,
@@ -130,6 +133,7 @@ async function top4(req, res) {
 
         return res.status(200).json({
             paginatedTable: {
+                total: filtered.count,
                 actualPage: page,
                 size,
                 numberOfPages,
@@ -163,6 +167,7 @@ async function winner(req, res) {
 
         return res.status(200).json({
             paginatedTable: {
+                total: filtered.count,
                 actualPage: page,
                 size,
                 numberOfPages,
