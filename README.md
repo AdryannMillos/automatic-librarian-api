@@ -1,6 +1,6 @@
 # Automatic-Librarian
 
-Automatic-Librarian is a web app that uses Puppeteer to scrape data from the website https://leviathancommander.wixsite.com/home/reports. The scraped data is then organized in a user-friendly way, allowing users to search for whatever they want with the parameters of location, commander, and date.
+Automatic-Librarian (automatic-librarian.vercel.app) is a web app that uses Puppeteer to scrape data from the website https://leviathancommander.wixsite.com/home/reports. The scraped data is then organized in a user-friendly way, allowing users to search for whatever they want with the parameters of location, commander, and date.
 
 ## Getting Started
 
